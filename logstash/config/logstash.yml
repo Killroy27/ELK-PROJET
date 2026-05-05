@@ -1,0 +1,7 @@
+# logstash/config/logstash.yml
+# Configuration générale de Logstash
+# Sera complétée dans la feature/bootstrap-stack
+
+http.host: "0.0.0.0"
+xpack.monitoring.enabled: false
+path.config: /usr/share/logstash/pipeline/*.conf
