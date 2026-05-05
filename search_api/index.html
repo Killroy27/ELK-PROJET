@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetflELK - Movies Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #141414;
+            --card-bg: #2f2f2f;
+            --text-color: #ffffff;
+            --text-muted: #808080;
+            --primary: #E50914;
+        }
+        
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        nav {
+            position: fixed; top: 0; width: 100%; padding: 15px 4%;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, rgba(20,20,20,0.95) 0%, rgba(20,20,20,0) 100%);
+            z-index: 100; transition: background 0.3s;
+        }
+        nav.scrolled { background: var(--bg-color); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        
+        .logo {
+            font-size: 2rem; font-weight: 900; color: var(--primary);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        
+        .search-container {
+            display: flex; align-items: center; background: rgba(0,0,0,0.7);
+            border: 1px solid #555; padding: 5px 15px; border-radius: 5px;
+        }
+        .search-container input {
+            background: transparent; border: none; color: white;
+            font-size: 1rem; padding: 5px; width: 250px; outline: none;
+        }
+        .search-container select {
+            background: transparent; color: white; border: none;
+            border-left: 1px solid #555; padding-left: 10px; outline: none;
+        }
+        .search-container select option {
+            color: black; background: white;
+        }
+
+        .hero {
+            position: relative; height: 75vh; min-height: 500px;
+            display: flex; align-items: center; padding: 0 4%;
+            background: #111; overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.35; z-index: 1;
+            background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover; background-position: center;
+        }
+        .hero-vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, var(--bg-color) 0%, transparent 60%),
+                        linear-gradient(to top, var(--bg-color) 0%, transparent 30%);
+            z-index: 2;
+        }
+        .hero-content { position: relative; z-index: 3; max-width: 650px; margin-top: 50px; }
+        .hero-title {
+            font-size: 3.5rem; font-weight: 900; margin: 0 0 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8); line-height: 1.1;
+        }
+        .hero-meta {
+            display: flex; gap: 15px; font-weight: 600; margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8); align-items: center;
+        }
+        .match-score { color: #46d369; font-weight: 800; }
+        .hd-badge { border: 1px solid rgba(255,255,255,0.4); padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; color: rgba(255,255,255,0.8); }
+        .hero-overview {
+            font-size: 1.1rem; line-height: 1.5; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            margin-bottom: 25px; color: #e5e5e5;
+            display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .hero-btn {
+            padding: 10px 25px; font-size: 1.2rem; font-weight: bold;
+            border-radius: 4px; border: none; cursor: pointer;
+            background: white; color: black; display: flex; align-items: center; gap: 10px;
+            transition: 0.2s;
+        }
+        .hero-btn:hover { background: #d3d3d3; }
+
+        .content-section {
+            padding: 0 4% 50px; position: relative; z-index: 5; margin-top: -60px;
+        }
+        .section-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 10px; color: #e5e5e5; }
+        .results-meta { color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem; }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px; row-gap: 35px;
+        }
+
+        .movie-card {
+            position: relative; border-radius: 6px; overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s;
+            background: #222; cursor: pointer;
+            aspect-ratio: 2 / 3;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .movie-card:hover {
+            transform: scale(1.08); z-index: 10;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.8);
+        }
+
+        .card-bg-letter {
+            position: absolute;
+            font-size: 15rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.04);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            user-select: none;
+            font-family: Arial, sans-serif;
+        }
+
+        .card-bg-title {
+            position: absolute;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            width: 85%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            text-transform: uppercase;
+            line-height: 1.2;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-info {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            padding: 20px 15px 15px;
+            background: rgba(0,0,0,0.85);
+            text-align: left; opacity: 0; transition: opacity 0.3s;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            z-index: 3;
+            backdrop-filter: blur(2px);
+        }
+
+        .movie-card:hover .card-info { opacity: 1; }
+
+        .card-title {
+            font-size: 1.1rem; font-weight: bold; margin: 0 0 8px 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: var(--primary);
+        }
+
+        .card-meta { display: flex; gap: 10px; font-size: 0.8rem; color: #eee; align-items: center; font-weight: 600;}
+        
+        em.highlight { color: var(--primary); font-style: normal; font-weight: bold; text-shadow: 0 0 5px rgba(229, 9, 20, 0.5); }
+    </style>
+</head>
+<body>
+
+    <nav id="navbar">
+        <div class="logo">NetflELK</div>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Titres, mots-clés (fuzziness auto)..." autocomplete="off">
+            <select id="langFilter">
+                <option value="">🌎 Toutes langues</option>
+            </select>
+        </div>
+    </nav>
+
+    <header class="hero" id="heroSection">
+        <div class="hero-bg" id="heroBg"></div>
+        <div class="hero-vignette"></div>
+        <div class="hero-content">
+            <h1 class="hero-title" id="heroTitle">Bienvenue sur NetflELK</h1>
+            <div class="hero-meta" id="heroMeta">
+                <span class="match-score">Recommandé à 100%</span>
+                <span>2024</span>
+                <span class="hd-badge">HD</span>
+            </div>
+            <p class="hero-overview" id="heroOverview">
+                Recherchez instantanément parmi des milliers de films grâce à la puissance d'Elasticsearch. 
+                Saisissez un titre pour voir le moteur en action.
+            </p>
+            <button class="hero-btn">▶ Lecture</button>
+        </div>
+    </header>
+
+    <div class="content-section">
+        <h2 class="section-title">Résultats de la recherche</h2>
+        <div class="results-meta" id="resultsMeta">Effectuez une recherche pour voir les résultats.</div>
+        <div class="movies-grid" id="resultsContainer">
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 10) nav.classList.add('scrolled');
+            else nav.classList.remove('scrolled');
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        const langFilter = document.getElementById('langFilter');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsMeta = document.getElementById('resultsMeta');
+        
+        const heroTitle = document.getElementById('heroTitle');
+        const heroOverview = document.getElementById('heroOverview');
+        const heroMeta = document.getElementById('heroMeta');
+
+        let debounceTimer;
+
+        async function fetchMovies() {
+            const query = searchInput.value;
+            const lang = langFilter.value;
+            
+            let url = `http://localhost:8001/search?size=24`;
+            if (query) url += `&q=${encodeURIComponent(query)}`;
+            if (lang) url += `&language=${lang}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error);
+
+                updateHero(data.results[0]);
+                renderResults(data);
+                updateFacets(data.facets);
+
+            } catch (error) {
+                resultsContainer.innerHTML = `<p style="color:var(--primary);">Erreur de connexion API : ${error.message}</p>`;
+            }
+        }
+
+        const palettes = [
+            'linear-gradient(135deg, #2b1055 0%, #7597de 100%)',
+            'linear-gradient(135deg, #1f0000 0%, #8a0000 100%)',
+            'linear-gradient(135deg, #001f11 0%, #008a4f 100%)',
+            'linear-gradient(135deg, #00121f 0%, #00568a 100%)',
+            'linear-gradient(135deg, #1f1100 0%, #8a4d00 100%)',
+            'linear-gradient(135deg, #1f001f 0%, #8a008a 100%)'
+        ];
+
+        function getGradient(title) {
+            let hash = 0;
+            for (let i = 0; i < title.length; i++) {
+                hash = title.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return palettes[Math.abs(hash) % palettes.length];
+        }
+
+        function updateHero(movie) {
+            if(!movie) return;
+            const cleanTitle = movie.title.replace(/<[^>]*>?/gm, '');
+            const cleanOverview = movie.overview_excerpt.replace(/<[^>]*>?/gm, '');
+            
+            heroTitle.innerText = cleanTitle;
+            heroOverview.innerText = cleanOverview || "Synopsis non disponible.";
+            
+            let matchScore = 50 + Math.round((movie.score || 1) * 5);
+            if(matchScore > 99) matchScore = 98;
+
+            heroMeta.innerHTML = `
+                <span class="match-score">Recommandé à ${matchScore}%</span>
+                <span>${movie.release_year || 'N/A'}</span>
+                <span class="hd-badge">${movie.original_language?.toUpperCase() || 'EN'}</span>
+                <span>⭐ ${movie.vote_average || '?'}</span>
+            `;
+        }
+
+        function renderResults(data) {
+            resultsMeta.innerHTML = `Trouvé <b>${data.total_results}</b> correspondances pertinentes.`;
+            
+            if (data.results.length === 0) {
+                resultsContainer.innerHTML = `<p>Aucun film trouvé avec ces critères.</p>`;
+                return;
+            }
+
+            resultsContainer.innerHTML = data.results.map(movie => {
+                const cleanTitle = movie.title.replace(/<[^>]*>?/gm, '');
+                const firstLetter = cleanTitle.charAt(0).toUpperCase();
+                const bg = getGradient(cleanTitle);
+
+                return `
+                <div class="movie-card" style="background: ${bg}">
+                    <div class="card-bg-letter">${firstLetter}</div>
+                    <div class="card-bg-title">${cleanTitle}</div>
+                    <div class="card-info">
+                        <h3 class="card-title">${movie.title}</h3>
+                        <div class="card-meta">
+                            <span class="match-score">${movie.release_year || ''}</span>
+                            <span>⭐ ${movie.vote_average || '0'}</span>
+                            <span class="hd-badge">${movie.original_language?.toUpperCase() || ''}</span>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        let facetsInitialized = false;
+        function updateFacets(facets) {
+            if (!facets || facetsInitialized) return;
+            const currentVal = langFilter.value;
+            let options = '<option value="">🌎 Toutes langues</option>';
+            facets.languages.forEach(bucket => {
+                const selected = bucket.key === currentVal ? 'selected' : '';
+                options += `<option value="${bucket.key}" ${selected}>${bucket.key.toUpperCase()} (${bucket.doc_count})</option>`;
+            });
+            langFilter.innerHTML = options;
+            facetsInitialized = true;
+        }
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(fetchMovies, 300);
+        });
+
+        langFilter.addEventListener('change', fetchMovies);
+
+        fetchMovies();
+    </script>
+</body>
+</html>
