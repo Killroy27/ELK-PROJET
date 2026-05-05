@@ -1,0 +1,66 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "filter": {
+        "autocomplete_filter": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20
+        },
+        "english_stop": {
+          "type": "stop",
+          "stopwords": "_english_"
+        }
+      },
+      "analyzer": {
+        "movie_text_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "asciifolding", "english_stop"]
+        },
+        "autocomplete_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "asciifolding", "autocomplete_filter"]
+        },
+        "autocomplete_search_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "asciifolding"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "movie_id":           { "type": "integer" },
+      "title": { 
+        "type": "text", 
+        "analyzer": "movie_text_analyzer", 
+        "fields": { 
+          "keyword": { "type": "keyword" },
+          "autocomplete": {
+            "type": "text",
+            "analyzer": "autocomplete_analyzer",
+            "search_analyzer": "autocomplete_search_analyzer"
+          }
+        } 
+      },
+      "original_language":  { "type": "keyword" },
+      "release_date":       { "type": "date" },
+      "release_year":       { "type": "integer" },
+      "popularity":         { "type": "float" },
+      "vote_average":       { "type": "float" },
+      "vote_count":         { "type": "integer" },
+      "overview":           { "type": "text", "analyzer": "movie_text_analyzer" },
+      "has_overview":       { "type": "boolean" },
+      "has_release_date":   { "type": "boolean" },
+      "is_future_release":  { "type": "boolean" },
+      "is_rating_reliable": { "type": "boolean" },
+      "quality_tags":       { "type": "keyword" },
+      "ingested_at":        { "type": "date" }
+    }
+  }
+}
