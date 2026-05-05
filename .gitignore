@@ -1,0 +1,34 @@
+# Environnement
+.env
+*.env.local
+
+# Elasticsearch data (volumes Docker)
+elasticsearch/data/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (search_api)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node (search_api alternative)
+node_modules/
+
+# Kibana exports générés dynamiquement (garder le .ndjson versionné)
+# kibana/exports/*.ndjson  <- on les garde
+
+# Données brutes (le CSV est dans DATA/ et versionné intentionnellement)
+# Si le fichier est trop lourd pour Git, décommenter :
+# Scripts utilitaires temporaires
+git_push_script.ps1
+generate_history.ps1
+git_push_script_final.ps1
