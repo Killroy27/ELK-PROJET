@@ -1,0 +1,10 @@
+{
+  "_comment": "Mapping movies_raw — ingestion brute, dynamic mapping actif. À créer via feature/ingestion-raw.",
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "dynamic": true
+  }
+}
